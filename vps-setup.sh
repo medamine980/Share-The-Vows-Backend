@@ -12,9 +12,11 @@ echo "📁 Creating directories..."
 mkdir -p uploads
 mkdir -p data
 
-# Set proper permissions
-echo "🔐 Setting permissions..."
-chmod 755 uploads
-chmod 755 data
+# Set proper ownership for container user (UID 1001, GID 1001)
+echo "🔐 Setting ownership and permissions..."
+chown -R 1001:1001 uploads
+chown -R 1001:1001 data
+chmod -R 755 uploads
+chmod -R 755 data
 
 echo "✅ Setup complete! Now run: docker-compose up -d --build"
