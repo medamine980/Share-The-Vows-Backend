@@ -36,3 +36,4 @@ data/
 # Test coverage
 coverage/
 .nyc_output/
+.github-*
