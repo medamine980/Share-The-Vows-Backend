@@ -64,6 +64,12 @@ export class PhotoRoutes {
       asyncHandler(this.uploadPhoto.bind(this))
     );
 
+    // Get latest 20 photos
+    this.router.get(
+      '/latest',
+      asyncHandler(this.getLatestPhotos.bind(this))
+    );
+
     // Get all photos (for admin/gallery view)
     this.router.get(
       '/photos',
@@ -167,6 +173,25 @@ export class PhotoRoutes {
           offset,
           hasMore: offset + photos.length < totalCount,
         },
+      },
+    });
+  }
+
+  private async getLatestPhotos(_req: Request, res: Response): Promise<void> {
+    const photos = this.db.getAllPhotos(20, 0);
+
+    res.json({
+      status: 'success',
+      data: {
+        photos: photos.map(p => ({
+          id: p.id,
+          guestName: p.guestName,
+          caption: p.caption,
+          width: p.width,
+          height: p.height,
+          uploadedAt: p.uploadedAt,
+          fileUrl: `/api/photos/${p.id}/file`,
+        })),
       },
     });
   }
