@@ -43,4 +43,5 @@ services:
 
 networks:
   app-network:
+    name: pfe-daba_app-network  # or whatever the actual name is
     external: true
