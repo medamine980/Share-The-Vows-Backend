@@ -44,7 +44,7 @@ export class PhotoRoutes {
     // Upload photo endpoint
     this.router.post(
       '/upload',
-      upload.array('images', 10),
+      upload.any(),
       [
         body('guestName')
           .optional()
@@ -102,10 +102,14 @@ export class PhotoRoutes {
   }
 
   private async uploadPhoto(req: Request, res: Response): Promise<void> {
-    const files = req.files as Express.Multer.File[];
+    const files = (req.files as Express.Multer.File[]) || [];
     
-    if (!files || files.length === 0) {
+    if (files.length === 0) {
       throw new AppError(400, 'No image files provided');
+    }
+
+    if (files.length > 10) {
+      throw new AppError(400, 'Maximum 10 images allowed per upload');
     }
 
     const { guestName, caption } = req.body;
