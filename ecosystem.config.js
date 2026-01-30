@@ -4,13 +4,13 @@ module.exports = {
     script: './dist/server.js',
     instances: 4, // Use 4 cores
     exec_mode: 'cluster',
-    max_memory_restart: '1G',
+    max_memory_restart: '1.2G',
     env_production: {
       NODE_ENV: 'production',
       PORT: 3333
     },
     // Performance optimizations
-    node_args: '--max-old-space-size=896', // Leave headroom for other processes
+    node_args: '--max-old-space-size=1152', // 1.125GB heap per instance
     error_file: '/dev/null', // Docker logs handle this
     out_file: '/dev/null',
     merge_logs: true,

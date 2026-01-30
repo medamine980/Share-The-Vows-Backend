@@ -42,10 +42,10 @@ services:
       resources:
         limits:
           cpus: '4'
-          memory: 4G
+          memory: 6G
         reservations:
           cpus: '2'
-          memory: 2G
+          memory: 3G
 
 networks:
   app-network:

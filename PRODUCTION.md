@@ -1,7 +1,7 @@
 # Production Deployment
 
 ## Server Specifications
-- **RAM**: 12GB (4GB allocated to container)
+- **RAM**: 12GB (6GB allocated to container)
 - **CPU**: 6 cores (4 cores allocated, PM2 uses 4 instances)
 - **Storage**: 190GB total (75GB limit for uploads)
 - **OS**: Linux VPS
@@ -38,14 +38,15 @@ curl http://localhost:3333/health
 ### PM2 Clustering
 - **Instances**: 4 (one per allocated core)
 - **Mode**: Cluster mode for load balancing
-- **Memory Limit**: 1GB per instance
+- **Memory Limit**: 1.2GB per instance
+- **Heap Size**: 1.125GB per instance
 - **Auto-restart**: Yes
 
 ### Docker Resources
 - **CPU Limit**: 4 cores
 - **CPU Reservation**: 2 cores minimum
-- **Memory Limit**: 4GB
-- **Memory Reservation**: 2GB minimum
+- **Memory Limit**: 6GB
+- **Memory Reservation**: 3GB minimum
 - **Shared Memory**: 256MB for Sharp processing
 
 ### SQLite Optimizations
@@ -132,7 +133,7 @@ docker image prune -a
 ## Expected Performance
 - **Upload Speed**: ~2-3 images/second
 - **Concurrent Uploads**: Up to 4 simultaneous (PM2 instances)
-- **Memory Usage**: 2-3GB under normal load
+- **Memory Usage**: 3-4GB under normal load
 - **CPU Usage**: 40-60% during peak uploads
 - **Response Time**: <200ms for GET requests
 - **Image Processing**: 1-2 seconds per 4096x4096 JPEG
