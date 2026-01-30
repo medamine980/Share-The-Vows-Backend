@@ -15,15 +15,7 @@ const upload = multer({
     fileSize: config.maxFileSize,
     files: 10,
   },
-  fileFilter: (_req, file, cb) => {
-    // Basic MIME type check (will be validated more thoroughly later)
-    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
-    if (allowedMimes.some(_mime => file.mimetype.startsWith('image/'))) {
-      cb(null, true);
-    } else {
-      cb(new AppError(400, 'Only image files are allowed'));
-    }
-  },
+  // No fileFilter - we do deep validation with magic bytes in imageService
 });
 
 export class PhotoRoutes {
