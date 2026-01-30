@@ -32,6 +32,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     dumb-init \
     libvips42 \
     libheif1 \
+    libde265-0 \
+    libx265-199 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
