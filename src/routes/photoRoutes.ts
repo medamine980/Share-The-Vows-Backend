@@ -163,6 +163,9 @@ export class PhotoRoutes {
     const photos = this.db.getAllPhotos(limit, offset);
     const totalCount = this.db.getPhotoCount();
 
+    // Cache for 30 seconds
+    res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=30');
+
     res.json({
       status: 'success',
       data: {
@@ -187,6 +190,9 @@ export class PhotoRoutes {
 
   private async getLatestPhotos(_req: Request, res: Response): Promise<void> {
     const photos = this.db.getAllPhotos(16, 0);
+
+    // Cache for 30 seconds - balance between freshness and performance
+    res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=30');
 
     res.json({
       status: 'success',
@@ -216,6 +222,9 @@ export class PhotoRoutes {
     if (!photo) {
       throw new AppError(404, 'Photo not found');
     }
+
+    // Cache metadata for 5 minutes
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300');
 
     res.json({
       status: 'success',
