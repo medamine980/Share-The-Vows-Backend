@@ -104,11 +104,17 @@ export class ImageService {
     });
 
     // Compress based on format
-    if (validation.mimeType === 'image/jpeg' || validation.mimeType === 'image/heic' || validation.mimeType === 'image/heif') {
+    if (validation.mimeType === 'image/jpeg') {
       processedImage = processedImage.jpeg({
         quality: config.compressionQuality,
         progressive: true,
         mozjpeg: true,
+      });
+    } else if (validation.mimeType === 'image/heic' || validation.mimeType === 'image/heif') {
+      // Keep HEIC as HEIC (no conversion)
+      processedImage = processedImage.heif({
+        quality: config.compressionQuality,
+        compression: 'av1',
       });
     } else if (validation.mimeType === 'image/png') {
       processedImage = processedImage.png({
