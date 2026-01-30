@@ -22,10 +22,13 @@ RUN npm run build
 # Production stage
 FROM node:20-alpine
 
-# Install runtime dependencies for sharp
+# Install runtime dependencies for sharp with HEIF support
 RUN apk add --no-cache \
     tini \
-    dumb-init
+    dumb-init \
+    libheif \
+    vips-dev \
+    vips-heif
 
 WORKDIR /app
 
