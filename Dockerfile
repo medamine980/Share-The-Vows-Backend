@@ -1,8 +1,13 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
 # Install build dependencies for native modules
-RUN apk add --no-cache python3 make g++ gcc
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    make \
+    g++ \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -20,15 +25,14 @@ COPY src ./src
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine
+FROM node:20-slim
 
-# Install runtime dependencies for sharp with HEIF support
-RUN apk add --no-cache \
-    tini \
+# Install runtime dependencies for sharp with full HEIF support
+RUN apt-get update && apt-get install -y --no-install-recommends \
     dumb-init \
-    libheif \
-    vips-dev \
-    vips-heif
+    libvips42 \
+    libheif1 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -41,8 +45,8 @@ RUN npm install --omit=dev && \
 COPY --from=builder /app/dist ./dist
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -g nodejs -s /bin/bash -m nodejs
 
 # Create necessary directories with correct permissions
 RUN mkdir -p /app/uploads /app/data && \
