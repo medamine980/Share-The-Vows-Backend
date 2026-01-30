@@ -29,7 +29,7 @@ const config: Config = {
   rateLimitMaxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100', 10),
   uploadDir: process.env.UPLOAD_DIR || './uploads',
   dbPath: process.env.DB_PATH || './data/wedding_photos.db',
-  compressionQuality: parseInt(process.env.COMPRESSION_QUALITY || '85', 10),
+  compressionQuality: parseInt(process.env.COMPRESSION_QUALITY || '82', 10), // Optimized for web
   maxImageWidth: parseInt(process.env.MAX_IMAGE_WIDTH || '4096', 10),
   maxImageHeight: parseInt(process.env.MAX_IMAGE_HEIGHT || '4096', 10),
 };

@@ -19,6 +19,11 @@ const server = app.app.listen(config.port, config.host, () => {
 
 Health check: http://${config.host}:${config.port}/health
   `);
+  
+  // Signal PM2 that app is ready
+  if (process.send) {
+    process.send('ready');
+  }
 });
 
 // Graceful shutdown

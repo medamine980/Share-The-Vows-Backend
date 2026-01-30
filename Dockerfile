@@ -27,13 +27,10 @@ RUN npm run build
 # Production stage
 FROM node:20-slim
 
-# Install runtime dependencies for sharp with full HEIF support
+# Install runtime dependencies for sharp (no HEIF needed - frontend handles HEIC)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     dumb-init \
     libvips42 \
-    libheif1 \
-    libde265-0 \
-    libx265-199 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -42,6 +39,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --omit=dev && \
     npm cache clean --force
+
+# Copy ecosystem config for PM2
+COPY ecosystem.config.js ./
 
 # Copy built application from builder
 COPY --from=builder /app/dist ./dist

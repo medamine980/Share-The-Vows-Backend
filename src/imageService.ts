@@ -40,7 +40,7 @@ export class ImageService {
         return { valid: false };
       }
 
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
       
       if (allowedTypes.includes(fileType.mime)) {
         return { valid: true, mimeType: fileType.mime };
@@ -62,22 +62,21 @@ export class ImageService {
     // Validate file type
     const validation = await this.validateImageType(buffer);
     if (!validation.valid || !validation.mimeType) {
-      throw new Error('Invalid image file type. Only JPEG, PNG, WebP, and HEIC are allowed.');
+      throw new Error('Invalid image file type. Only JPEG, PNG, and WebP are allowed.');
     }
 
-    // Determine output format - convert HEIC to WebP for better compatibility
-    const isHeic = validation.mimeType === 'image/heic' || validation.mimeType === 'image/heif';
-    const outputFormat = isHeic ? 'webp' : path.extname(sanitize(originalName)).slice(1) || 'jpg';
-    const outputMimeType = isHeic ? 'image/webp' : validation.mimeType;
-    
-    // Generate unique filename
-    const filename = `${uuidv4()}.${outputFormat}`;
+    // Determine output format
+    const ext = path.extname(sanitize(originalName)).slice(1) || 'jpg';
+    const filename = `${uuidv4()}.${ext}`;
     const filePath = path.join(this.uploadDir, filename);
 
-    // Process image with sharp
+    // Process image with sharp (optimized for production)
     const image = sharp(buffer, {
-      limitInputPixels: config.maxImageWidth * config.maxImageHeight * 4, // Prevent decompression bombs
+      limitInputPixels: config.maxImageWidth * config.maxImageHeight * 4,
       sequentialRead: true,
+      // Performance optimizations
+      failOn: 'none', // Don't fail on warnings
+      animated: false, // Disable animated image support for performance
     });
 
     // Get metadata
@@ -107,23 +106,28 @@ export class ImageService {
       icc: undefined,
     });
 
-    // Compress based on output format
-    if (outputMimeType === 'image/jpeg') {
+    // Compress based on format with production optimizations
+    if (validation.mimeType === 'image/jpeg') {
       processedImage = processedImage.jpeg({
         quality: config.compressionQuality,
         progressive: true,
         mozjpeg: true,
+        optimizeCoding: true,
+        trellisQuantisation: true,
+        overshootDeringing: true,
       });
-    } else if (outputMimeType === 'image/webp') {
-      // Convert HEIC to WebP or process WebP input
+    } else if (validation.mimeType === 'image/webp') {
       processedImage = processedImage.webp({
         quality: config.compressionQuality,
+        effort: 4, // 0-6, balance between speed and compression
+        smartSubsample: true,
       });
-    } else if (outputMimeType === 'image/png') {
+    } else if (validation.mimeType === 'image/png') {
       processedImage = processedImage.png({
         compressionLevel: 9,
         progressive: true,
         palette: true,
+        adaptiveFiltering: true,
       });
     }
 
@@ -133,7 +137,7 @@ export class ImageService {
     return {
       filename,
       originalName: sanitize(originalName),
-      mimeType: outputMimeType,
+      mimeType: validation.mimeType,
       fileSize: outputInfo.size,
       width: outputInfo.width,
       height: outputInfo.height,

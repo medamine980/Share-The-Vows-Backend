@@ -13,7 +13,7 @@ services:
       - HOST=0.0.0.0
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
       - MAX_FILE_SIZE=${MAX_FILE_SIZE:-10485760}
-      - MAX_STORAGE_GB=${MAX_STORAGE_GB:-50}
+      - MAX_STORAGE_GB=${MAX_STORAGE_GB:-75}
       - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
       - RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-100}
       - UPLOAD_DIR=/app/uploads
@@ -24,6 +24,12 @@ services:
     volumes:
       - ./uploads:/app/uploads
       - ./data:/app/data
+    # Production optimizations
+    shm_size: '256mb'
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     networks:
       - app-network
     healthcheck:
@@ -35,11 +41,11 @@ services:
     deploy:
       resources:
         limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
           cpus: '2'
           memory: 2G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
 
 networks:
   app-network:

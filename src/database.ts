@@ -27,10 +27,14 @@ export class DatabaseService {
     }
 
     this.db = new Database(dbPath);
+    // Production-optimized SQLite settings
     this.db.pragma('journal_mode = WAL'); // Better concurrency
-    this.db.pragma('synchronous = NORMAL'); // Better performance
-    this.db.pragma('cache_size = -64000'); // 64MB cache
+    this.db.pragma('synchronous = NORMAL'); // Balance safety/performance
+    this.db.pragma('cache_size = -128000'); // 128MB cache for production
     this.db.pragma('temp_store = MEMORY');
+    this.db.pragma('mmap_size = 30000000000'); // 30GB memory-mapped I/O
+    this.db.pragma('page_size = 4096'); // Optimal for most systems
+    this.db.pragma('wal_autocheckpoint = 1000'); // Checkpoint every 1000 pages
     
     this.initializeDatabase();
   }
