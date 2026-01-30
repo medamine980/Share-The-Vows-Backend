@@ -65,9 +65,13 @@ export class ImageService {
       throw new Error('Invalid image file type. Only JPEG, PNG, WebP, and HEIC are allowed.');
     }
 
+    // Determine output format - convert HEIC to WebP for better compatibility
+    const isHeic = validation.mimeType === 'image/heic' || validation.mimeType === 'image/heif';
+    const outputFormat = isHeic ? 'webp' : path.extname(sanitize(originalName)).slice(1) || 'jpg';
+    const outputMimeType = isHeic ? 'image/webp' : validation.mimeType;
+    
     // Generate unique filename
-    const ext = path.extname(sanitize(originalName));
-    const filename = `${uuidv4()}${ext || '.jpg'}`;
+    const filename = `${uuidv4()}.${outputFormat}`;
     const filePath = path.join(this.uploadDir, filename);
 
     // Process image with sharp
@@ -103,28 +107,23 @@ export class ImageService {
       icc: undefined,
     });
 
-    // Compress based on format
-    if (validation.mimeType === 'image/jpeg') {
+    // Compress based on output format
+    if (outputMimeType === 'image/jpeg') {
       processedImage = processedImage.jpeg({
         quality: config.compressionQuality,
         progressive: true,
         mozjpeg: true,
       });
-    } else if (validation.mimeType === 'image/heic' || validation.mimeType === 'image/heif') {
-      // Keep HEIC as HEIC (no conversion)
-      processedImage = processedImage.heif({
+    } else if (outputMimeType === 'image/webp') {
+      // Convert HEIC to WebP or process WebP input
+      processedImage = processedImage.webp({
         quality: config.compressionQuality,
-        compression: 'av1',
       });
-    } else if (validation.mimeType === 'image/png') {
+    } else if (outputMimeType === 'image/png') {
       processedImage = processedImage.png({
         compressionLevel: 9,
         progressive: true,
         palette: true,
-      });
-    } else if (validation.mimeType === 'image/webp') {
-      processedImage = processedImage.webp({
-        quality: config.compressionQuality,
       });
     }
 
@@ -134,7 +133,7 @@ export class ImageService {
     return {
       filename,
       originalName: sanitize(originalName),
-      mimeType: validation.mimeType,
+      mimeType: outputMimeType,
       fileSize: outputInfo.size,
       width: outputInfo.width,
       height: outputInfo.height,
