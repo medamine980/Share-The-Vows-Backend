@@ -13,7 +13,7 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: config.maxFileSize,
-    files: 1,
+    files: 10,
   },
   fileFilter: (_req, file, cb) => {
     // Basic MIME type check (will be validated more thoroughly later)
@@ -44,7 +44,7 @@ export class PhotoRoutes {
     // Upload photo endpoint
     this.router.post(
       '/upload',
-      upload.single('image'),
+      upload.array('images', 10),
       [
         body('guestName')
           .optional()
@@ -102,17 +102,13 @@ export class PhotoRoutes {
   }
 
   private async uploadPhoto(req: Request, res: Response): Promise<void> {
-    if (!req.file) {
-      throw new AppError(400, 'No image file provided');
+    const files = req.files as Express.Multer.File[];
+    
+    if (!files || files.length === 0) {
+      throw new AppError(400, 'No image files provided');
     }
 
     const { guestName, caption } = req.body;
-
-    // Process and compress image
-    const processedImage = await this.imageService.processImage(
-      req.file.buffer,
-      req.file.originalname
-    );
 
     // Get client IP (handle proxy headers)
     const ipAddress = (
@@ -122,28 +118,44 @@ export class PhotoRoutes {
       ''
     ).split(',')[0].trim();
 
-    // Save to database
-    const photo = this.db.insertPhoto({
-      filename: processedImage.filename,
-      originalName: processedImage.originalName,
-      guestName: guestName || undefined,
-      caption: caption || undefined,
-      mimeType: processedImage.mimeType,
-      fileSize: processedImage.fileSize,
-      width: processedImage.width,
-      height: processedImage.height,
-      ipAddress,
-    });
+    // Process all images
+    const uploadedPhotos = [];
+    
+    for (const file of files) {
+      // Process and compress image
+      const processedImage = await this.imageService.processImage(
+        file.buffer,
+        file.originalname
+      );
 
-    res.status(201).json({
-      status: 'success',
-      message: 'Photo uploaded successfully',
-      data: {
+      // Save to database
+      const photo = this.db.insertPhoto({
+        filename: processedImage.filename,
+        originalName: processedImage.originalName,
+        guestName: guestName || undefined,
+        caption: caption || undefined,
+        mimeType: processedImage.mimeType,
+        fileSize: processedImage.fileSize,
+        width: processedImage.width,
+        height: processedImage.height,
+        ipAddress,
+      });
+
+      uploadedPhotos.push({
         id: photo.id,
         uploadedAt: photo.uploadedAt,
         filename: photo.filename,
         width: photo.width,
         height: photo.height,
+      });
+    }
+
+    res.status(201).json({
+      status: 'success',
+      message: `${uploadedPhotos.length} photo(s) uploaded successfully`,
+      data: {
+        photos: uploadedPhotos,
+        count: uploadedPhotos.length,
       },
     });
   }
@@ -178,7 +190,7 @@ export class PhotoRoutes {
   }
 
   private async getLatestPhotos(_req: Request, res: Response): Promise<void> {
-    const photos = this.db.getAllPhotos(20, 0);
+    const photos = this.db.getAllPhotos(16, 0);
 
     res.json({
       status: 'success',

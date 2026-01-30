@@ -9,25 +9,30 @@ POST /api/upload
 Content-Type: multipart/form-data
 
 Body:
-- image (required): Image file
+- images (required): One or more image files (max 10)
 - guestName (optional): String, max 100 chars
 - caption (optional): String, max 500 chars
 
 Response:
 {
   "status": "success",
-  "message": "Photo uploaded successfully",
+  "message": "3 photo(s) uploaded successfully",
   "data": {
-    "id": 1,
-    "uploadedAt": "2026-01-29T12:00:00Z",
-    "filename": "uuid-generated.jpg",
-    "width": 1920,
-    "height": 1080
+    "photos": [
+      {
+        "id": 1,
+        "uploadedAt": "2026-01-29T12:00:00Z",
+        "filename": "uuid-generated.jpg",
+        "width": 1920,
+        "height": 1080
+      }
+    ],
+    "count": 3
   }
 }
 ```
 
-## 📸 Get Latest 20 Photos
+## 📸 Get Latest 16 Photos
 ```
 GET /api/latest
 
