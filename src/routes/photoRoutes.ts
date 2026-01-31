@@ -86,6 +86,12 @@ export class PhotoRoutes {
       asyncHandler(this.getStats.bind(this))
     );
 
+    // Get total photo count
+    this.router.get(
+      '/count',
+      asyncHandler(this.getCount.bind(this))
+    );
+
     // Delete photo (admin endpoint - consider adding auth)
     this.router.delete(
       '/photos/:id',
@@ -280,6 +286,20 @@ export class PhotoRoutes {
         totalSizeGB: parseFloat(stats.totalSizeGB.toFixed(2)),
         maxStorageGB: config.maxStorageGB,
         percentageUsed: parseFloat(((stats.totalSizeGB / config.maxStorageGB) * 100).toFixed(2)),
+      },
+    });
+  }
+
+  private async getCount(_req: Request, res: Response): Promise<void> {
+    const count = this.db.getPhotoCount();
+
+    // Cache for 30 seconds
+    res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=30');
+
+    res.json({
+      status: 'success',
+      data: {
+        count,
       },
     });
   }
