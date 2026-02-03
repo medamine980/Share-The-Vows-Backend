@@ -26,12 +26,14 @@ class App {
   }
 
   private initializeMiddlewares(): void {
-    // Security headers
+    // Security headers with relaxed CSP for admin panel
     this.app.use(
       helmet({
         contentSecurityPolicy: {
           directives: {
             defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for admin panel
+            scriptSrcAttr: ["'unsafe-inline'"], // Allow onclick handlers
             imgSrc: ["'self'", 'data:', 'blob:'],
           },
         },
