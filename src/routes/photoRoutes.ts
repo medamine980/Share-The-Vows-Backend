@@ -5,6 +5,7 @@ import { DatabaseService } from '../database';
 import { ImageService } from '../imageService';
 import { asyncHandler, validateRequest, AppError } from '../middleware/errorHandler';
 import { StorageMiddleware } from '../middleware/storage';
+import { adminAuth } from '../middleware/adminAuth';
 import config from '../config';
 import path from 'path';
 
@@ -92,9 +93,17 @@ export class PhotoRoutes {
       asyncHandler(this.getCount.bind(this))
     );
 
-    // Delete photo (admin endpoint - consider adding auth)
+    // Admin panel - protected by Basic Auth
+    this.router.get(
+      '/admin',
+      adminAuth,
+      asyncHandler(this.getAdminPanel.bind(this))
+    );
+
+    // Delete photo (admin endpoint - protected)
     this.router.delete(
       '/photos/:id',
+      adminAuth,
       asyncHandler(this.deletePhoto.bind(this))
     );
   }
@@ -328,4 +337,241 @@ export class PhotoRoutes {
       message: 'Photo deleted successfully',
     });
   }
+
+  private async getAdminPanel(_req: Request, res: Response): Promise<void> {
+    const photos = this.db.getAllPhotos(1000, 0); // Get up to 1000 photos
+    const stats = this.db.getStorageStats();
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wedding Photos Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    .header {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .header h1 { color: #333; margin-bottom: 10px; }
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+    .stat {
+      background: #f8f9fa;
+      padding: 10px 15px;
+      border-radius: 6px;
+      border-left: 3px solid #007bff;
+    }
+    .stat-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+    .stat-value { font-size: 20px; font-weight: bold; color: #333; }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .photo-card {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .photo-card:hover { transform: translateY(-4px); }
+    .photo-img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      cursor: pointer;
+    }
+    .photo-info {
+      padding: 12px;
+    }
+    .photo-meta {
+      font-size: 12px;
+      color: #666;
+      margin: 4px 0;
+    }
+    .photo-caption {
+      margin: 8px 0;
+      color: #333;
+      font-size: 14px;
+    }
+    .delete-btn {
+      width: 100%;
+      padding: 8px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+    .delete-btn:hover { background: #c82333; }
+    .delete-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .modal.active { display: flex; }
+    .modal-img {
+      max-width: 90%;
+      max-height: 90vh;
+      object-fit: contain;
+    }
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 40px;
+      color: white;
+      font-size: 40px;
+      cursor: pointer;
+    }
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎉 Wedding Photos Admin</h1>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Total Photos</div>
+        <div class="stat-value">${stats.totalFiles}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Storage Used</div>
+        <div class="stat-value">${stats.totalSizeGB.toFixed(2)} GB</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Storage Limit</div>
+        <div class="stat-value">${config.maxStorageGB} GB</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Percentage Used</div>
+        <div class="stat-value">${((stats.totalSizeGB / config.maxStorageGB) * 100).toFixed(1)}%</div>
+      </div>
+    </div>
+  </div>
+
+  ${photos.length === 0 ? '<div class="empty"><h2>No photos uploaded yet</h2></div>' : `
+  <div class="gallery">
+    ${photos.map(photo => `
+      <div class="photo-card" id="card-${photo.id}">
+        <img 
+          src="/api/photos/${photo.id}/file" 
+          alt="${photo.caption || 'Photo'}"
+          class="photo-img"
+          onclick="openModal('/api/photos/${photo.id}/file')"
+          loading="lazy"
+        />
+        <div class="photo-info">
+          ${photo.guestName ? `<div class="photo-meta"><strong>👤 ${photo.guestName}</strong></div>` : ''}
+          ${photo.caption ? `<div class="photo-caption">${photo.caption}</div>` : ''}
+          <div class="photo-meta">📅 ${new Date(photo.uploadedAt).toLocaleString()}</div>
+          <div class="photo-meta">📏 ${photo.width}×${photo.height} • ${(photo.fileSize / 1024 / 1024).toFixed(2)} MB</div>
+          <div class="photo-meta">🆔 ID: ${photo.id}</div>
+          <button class="delete-btn" onclick="deletePhoto(${photo.id})">🗑️ Delete Photo</button>
+        </div>
+      </div>
+    `).join('')}
+  </div>
+  `}
+
+  <div class="modal" id="modal" onclick="closeModal()">
+    <span class="modal-close">&times;</span>
+    <img id="modal-img" class="modal-img" src="" alt="Full size">
+  </div>
+
+  <script>
+    function openModal(src) {
+      document.getElementById('modal').classList.add('active');
+      document.getElementById('modal-img').src = src;
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+      document.getElementById('modal-img').src = '';
+    }
+
+    async function deletePhoto(id) {
+      if (!confirm('Are you sure you want to delete this photo? This cannot be undone.')) {
+        return;
+      }
+
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = 'Deleting...';
+
+      try {
+        const response = await fetch('/api/photos/' + id, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': getAuthHeader()
+          }
+        });
+
+        if (response.ok) {
+          document.getElementById('card-' + id).remove();
+          alert('Photo deleted successfully');
+          location.reload(); // Refresh to update stats
+        } else {
+          const data = await response.json();
+          alert('Error: ' + (data.message || 'Failed to delete'));
+          btn.disabled = false;
+          btn.textContent = '🗑️ Delete Photo';
+        }
+      } catch (error) {
+        alert('Network error: ' + error.message);
+        btn.disabled = false;
+        btn.textContent = '🗑️ Delete Photo';
+      }
+    }
+
+    function getAuthHeader() {
+      // Extract Basic Auth from current page request
+      return document.cookie.includes('auth') ? 
+        localStorage.getItem('auth') : 
+        btoa('admin:' + prompt('Enter admin password:'));
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+  </script>
+</body>
+</html>
+    `.trim();
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  }
 }
+

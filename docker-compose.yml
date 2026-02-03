@@ -21,6 +21,7 @@ services:
       - COMPRESSION_QUALITY=${COMPRESSION_QUALITY:-85}
       - MAX_IMAGE_WIDTH=${MAX_IMAGE_WIDTH:-4096}
       - MAX_IMAGE_HEIGHT=${MAX_IMAGE_HEIGHT:-4096}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme}
     volumes:
       - ./uploads:/app/uploads
       - ./data:/app/data
@@ -46,6 +47,32 @@ services:
         reservations:
           cpus: '2'
           memory: 3G
+
+  # Admin database viewer - only accessible via SSH tunnel
+  db-admin:
+    image: coleifer/sqlite-web:latest
+    container_name: wedding-db-admin
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"  # Only accessible from localhost
+    environment:
+      - SQLITE_DATABASE=/data/wedding_photos.db
+      - SQLITE_READONLY=0  # Allow modifications
+    volumes:
+      - ./data:/data:rw
+      - ./uploads:/uploads:ro  # Read-only access to view images
+    command: [
+      "sqlite_web",
+      "/data/wedding_photos.db",
+      "--host", "0.0.0.0",
+      "--port", "8080",
+      "--read-only", "0",
+      "--url-prefix", ""
+    ]
+    networks:
+      - app-network
+    depends_on:
+      - app
 
 networks:
   app-network:

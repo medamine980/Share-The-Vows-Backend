@@ -16,6 +16,7 @@ export interface Config {
   compressionQuality: number;
   maxImageWidth: number;
   maxImageHeight: number;
+  adminPassword: string;
 }
 
 const config: Config = {
@@ -32,6 +33,7 @@ const config: Config = {
   compressionQuality: parseInt(process.env.COMPRESSION_QUALITY || '82', 10), // Optimized for web
   maxImageWidth: parseInt(process.env.MAX_IMAGE_WIDTH || '4096', 10),
   maxImageHeight: parseInt(process.env.MAX_IMAGE_HEIGHT || '4096', 10),
+  adminPassword: process.env.ADMIN_PASSWORD || 'changeme',
 };
 
 export default config;

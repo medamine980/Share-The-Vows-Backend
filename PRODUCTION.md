@@ -24,6 +24,69 @@ docker-compose up -d
 ### 3. Verify Deployment
 ```bash
 # Check container status
+docker ps | grep wedding
+
+# Check logs
+docker-compose logs -f wedding-photos-api
+
+# Check health
+curl http://localhost:3333/health
+```
+
+## Database Admin Panel
+
+A SQLite web admin interface is included for managing photos and viewing the database.
+
+### Access via SSH Tunnel (Secure)
+
+**From your local machine:**
+```bash
+# Create SSH tunnel to VPS
+ssh -L 8080:localhost:8080 user@37.60.254.169
+
+# Then open in browser:
+http://localhost:8080
+```
+
+### Features
+- Browse all photos and metadata
+- Execute SQL queries
+- Delete inappropriate photos
+- View database structure
+- Export data
+
+### Delete Photo Process
+1. Access admin panel via SSH tunnel
+2. Go to "photos" table
+3. Find the photo by ID, filename, or upload date
+4. Note the `filename` value
+5. Delete the database row
+6. Manually delete the file: `docker exec wedding-photos-api rm /app/uploads/FILENAME`
+
+### Security
+- **Only accessible via localhost** (127.0.0.1:8080)
+- **No public access** - requires SSH tunnel
+- **No password** - protected by SSH key authentication
+- Database has read-write access for admin tasks
+
+## Deployment Steps
+
+### 1. Pull Latest Code
+```bash
+cd /path/to/Share-The-Vows-Backend
+git pull origin main
+```
+
+### 2. Rebuild Container (No Cache)
+```bash
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+### 3. Verify Deployment
+```bash
+# Check container status
 docker ps | grep wedding-photos-api
 
 # Check logs
@@ -75,7 +138,7 @@ curl https://wedding.pfedaba.ma/api/stats
 
 ### Container Stats
 ```bash
-docker stats wedding-photos-api
+docker stats wedding-photos-api wedding-db-admin
 ```
 
 ### PM2 Status (inside container)
