@@ -54,7 +54,7 @@ services:
     container_name: wedding-db-admin
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8080:8080"  # Only accessible from localhost
+      - "127.0.0.1:8765:8080"  # Only accessible from localhost
     environment:
       - SQLITE_DATABASE=/data/wedding_photos.db
       - SQLITE_READONLY=0  # Allow modifications

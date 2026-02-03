@@ -42,10 +42,10 @@ A SQLite web admin interface is included for managing photos and viewing the dat
 **From your local machine:**
 ```bash
 # Create SSH tunnel to VPS
-ssh -L 8080:localhost:8080 user@37.60.254.169
+ssh -L 8765:localhost:8765 user@37.60.254.169
 
 # Then open in browser:
-http://localhost:8080
+http://localhost:8765
 ```
 
 ### Features

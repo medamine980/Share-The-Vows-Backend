@@ -21,11 +21,11 @@ Visit: **https://wedding.pfedaba.ma/api/admin**
 
 ### 1. Create SSH Tunnel
 ```bash
-ssh -L 8080:localhost:8080 root@37.60.254.169
+ssh -L 8765:localhost:8765 root@37.60.254.169
 ```
 
 ### 2. Open Admin Panel
-Open browser: **http://localhost:8080**
+Open browser: **http://localhost:8765**
 
 Keep the SSH connection open while using the admin panel.
 
@@ -182,7 +182,7 @@ docker exec wedding-photos-api ls /app/uploads
 
 | Task | Command/URL |
 |------|-------------|
-| Access admin panel | http://localhost:8080 (via SSH tunnel) |
+| Access admin panel | http://localhost:8765 (via SSH tunnel) |
 | View all photos | Click "photos" table |
 | Delete photo | Use API: `DELETE /api/photos/:id` |
 | Check stats | https://wedding.pfedaba.ma/api/stats |
