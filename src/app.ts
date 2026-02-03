@@ -46,6 +46,7 @@ class App {
       config.corsOrigin,
       'https://lovable.app',
       'https://lovable.dev',
+      'https://id-preview--184c2f8c-fafa-4cd2-a826-64741c44efad.lovable.app'
     ].filter(origin => origin && origin !== '*');
 
     this.app.use(
