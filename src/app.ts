@@ -40,9 +40,15 @@ class App {
     );
 
     // CORS
+    const allowedOrigins = [
+      config.corsOrigin,
+      'https://lovable.app',
+      'https://lovable.dev',
+    ].filter(origin => origin && origin !== '*');
+
     this.app.use(
       cors({
-        origin: config.corsOrigin,
+        origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
         methods: ['GET', 'POST', 'DELETE'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
