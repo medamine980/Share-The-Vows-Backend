@@ -532,9 +532,7 @@ export class PhotoRoutes {
       try {
         const response = await fetch('/api/photos/' + id, {
           method: 'DELETE',
-          headers: {
-            'Authorization': getAuthHeader()
-          }
+          credentials: 'include' // Use browser's stored Basic Auth credentials
         });
 
         if (response.ok) {
@@ -552,13 +550,6 @@ export class PhotoRoutes {
         btn.disabled = false;
         btn.textContent = '🗑️ Delete Photo';
       }
-    }
-
-    function getAuthHeader() {
-      // Extract Basic Auth from current page request
-      return document.cookie.includes('auth') ? 
-        localStorage.getItem('auth') : 
-        btoa('admin:' + prompt('Enter admin password:'));
     }
 
     // Close modal on Escape key
