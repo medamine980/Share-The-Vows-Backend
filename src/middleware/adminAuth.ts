@@ -16,7 +16,7 @@ export const adminAuth = (req: Request, res: Response, next: NextFunction): void
   // Decode Base64 credentials
   const base64Credentials = authHeader.split(' ')[1];
   const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
-  const [username, password] = credentials.split(':');
+  const [, password] = credentials.split(':');
 
   // Check password (username can be anything)
   if (password !== config.adminPassword) {
